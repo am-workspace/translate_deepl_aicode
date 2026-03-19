@@ -335,9 +335,8 @@
 
       try {
         // 使用DeepL API
-        // const apiKey = 'YOUR_DEEPL_API_KEY'; // 请替换为您的DeepL API密钥
-        const apiKey = '9a755add-ae9a-461f-97fc-996f390cd536'; // 请替换为您的DeepL API密钥
-        const url = 'https://api.deepl.com/v2/translate';
+        const apiKey = 'YOUR_DEEPL_API_KEY,注意:免费版:fx保留'; // 请替换为您的DeepL API密钥
+        const url = 'https://api-free.deepl.com/v2/translate';//目前请求为免费版，非免费版url=https://api.deepl.com/v2/translate
         const response = await fetch(url, {
           method: 'POST',
           headers: {
