@@ -4,7 +4,7 @@
 # 使用事项
 在main-window.html文件中
 
-312-313行
+338-339行
 
 将自己的deepl-api-key更改保存即可
 
