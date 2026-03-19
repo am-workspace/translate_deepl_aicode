@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>翻译工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-app-region: drag; /* 可拖拽区域 */
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 15px;
+      gap: 12px;
+    }
+
+    /* 顶部控制区 */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      -webkit-app-region: drag;
+    }
+
+    /* 语言选择栏 - 可拖拽 */
+    .language-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      -webkit-app-region: drag;
+    }
+
+    .language-select {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .close-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 20px;
+      color: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+      border-radius: 50%;
+    }
+
+    .close-btn:hover {
+      background: #ff5f57;
+      color: #fff;
+    }
+
+    .language-btn {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 20px;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+    }
+
+    .language-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .language-btn.active {
+      background: #667eea;
+      color: #fff;
+    }
+
+    .swap-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #667eea;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+    }
+
+    .swap-btn:hover {
+      background: #5568d3;
+      transform: rotate(180deg);
+    }
+
+    .clear-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-size: 14px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+      border-radius: 50%;
+      margin-left: 8px;
+    }
+
+    .clear-btn:hover {
+      background: #ff9f43;
+      color: #fff;
+    }
+
+    /* 输入区域 */
+    .input-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      -webkit-app-region: no-drag;
+    }
+
+    .input-box {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      resize: none;
+      font-size: 16px;
+      outline: none;
+      background: transparent;
+      -webkit-app-region: no-drag;
+    }
+
+    .input-box::placeholder {
+      color: #bbb;
+    }
+
+    .char-count {
+      padding: 8px 15px;
+      text-align: right;
+      font-size: 12px;
+      color: #999;
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    /* 输出区域 */
+    .output-area {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 15px;
+      overflow-y: auto;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .output-text {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .loading {
+      color: #999;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部控制区 -->
+    <div class="header-bar">
+      <div class="language-bar">
+        <div class="language-select">
+          <button class="language-btn active" id="sourceLang">中文</button>
+          <button class="swap-btn" id="swapBtn" title="交换语言">⇄</button>
+          <button class="language-btn" id="targetLang">英文</button>
+          <button class="clear-btn" id="clearBtn" title="清空">🗑</button>
+        </div>
+      </div>
+      <button class="close-btn" id="closeBtn" title="关闭">×</button>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="input-area">
+      <textarea 
+        class="input-box" 
+        id="inputText" 
+        placeholder="请输入要翻译的文字..."
+      ></textarea>
+      <div class="char-count" id="charCount">0/5000</div>
+    </div>
+
+    <!-- 输出区域 -->
+    <div class="output-area">
+      <div class="output-text" id="outputText">翻译结果将显示在这里...</div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // 语言选项
+    const languages = [
+      { code: 'zh', name: '中文' },
+      { code: 'en', name: '英文' },
+      { code: 'jp', name: '日文' },
+      { code: 'ko', name: '韩文' },
+      { code: 'fr', name: '法文' },
+      { code: 'es', name: '西班牙文' }
+    ];
+
+    let sourceLangIndex = 0; // 中文
+    let targetLangIndex = 1; // 英文
+
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const charCount = document.getElementById('charCount');
+    const sourceLangBtn = document.getElementById('sourceLang');
+    const targetLangBtn = document.getElementById('targetLang');
+    const swapBtn = document.getElementById('swapBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // 清空按钮
+    clearBtn.addEventListener('click', () => {
+      inputText.value = '';
+      outputText.textContent = '翻译结果将显示在这里...';
+      charCount.textContent = '0/5000';
+      inputText.focus();
+    });
+
+    // 更新语言按钮显示
+    function updateLanguageButtons() {
+      sourceLangBtn.textContent = languages[sourceLangIndex].name;
+      targetLangBtn.textContent = languages[targetLangIndex].name;
+      
+      sourceLangBtn.className = 'language-btn active';
+      targetLangBtn.className = 'language-btn';
+    }
+
+    // 字符计数
+    inputText.addEventListener('input', () => {
+      const count = inputText.value.length;
+      charCount.textContent = `${count}/5000`;
+      
+      // 自动翻译（防抖）
+      clearTimeout(window.translateTimer);
+      if (count > 0) {
+        window.translateTimer = setTimeout(() => {
+          doTranslate();
+        }, 500);
+      } else {
+        outputText.textContent = '翻译结果将显示在这里...';
+      }
+    });
+
+    // 交换语言
+    swapBtn.addEventListener('click', () => {
+      [sourceLangIndex, targetLangIndex] = [targetLangIndex, sourceLangIndex];
+      updateLanguageButtons();
+      
+      // 交换输入输出内容
+      const temp = inputText.value;
+      inputText.value = outputText.textContent !== '翻译结果将显示在这里...' ? outputText.textContent : '';
+      outputText.textContent = '翻译结果将显示在这里...';
+      
+      if (inputText.value) {
+        doTranslate();
+      }
+    });
+
+    // // 执行翻译
+    // async function doTranslate() {
+    //   const text = inputText.value.trim();
+    //   if (!text) return;
+
+    //   outputText.innerHTML = '<span class="loading">翻译中...</span>';
+
+    //   const sourceLang = languages[sourceLangIndex].code;
+    //   const targetLangCode = languages[targetLangIndex].code;
+
+    //   try {
+    //     // 使用有道翻译 API
+    //     const url = `https://fanyi.youdao.com/translate?&doctype=json&type=${sourceLang}_to_${targetLangCode}&i=${encodeURIComponent(text)}`;
+    //     const response = await fetch(url);
+    //     const data = await response.json();
+        
+    //     if (data && data.translateResult && data.translateResult[0]) {
+    //       outputText.textContent = data.translateResult[0][0].tgt;
+    //     } else {
+    //       outputText.textContent = mockTranslate(text, sourceLang, targetLangCode);
+    //     }
+    //   } catch (error) {
+    //     outputText.textContent = mockTranslate(text, sourceLang, targetLangCode);
+    //   }
+    // }
+
+    // 执行翻译
+    async function doTranslate() {
+      const text = inputText.value.trim();
+      if (!text) return;
+
+      outputText.innerHTML = '<span class="loading">翻译中...</span>';
+
+      const sourceLang = languages[sourceLangIndex].code;
+      const targetLangCode = languages[targetLangIndex].code;
+
+      try {
+        // 使用DeepL API
+        // const apiKey = 'YOUR_DEEPL_API_KEY'; // 请替换为您的DeepL API密钥
+        const apiKey = '9a755add-ae9a-461f-97fc-996f390cd536'; // 请替换为您的DeepL API密钥
+        const url = 'https://api.deepl.com/v2/translate';
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `DeepL-Auth-Key ${apiKey}`
+          },
+          body: new URLSearchParams({
+            'text': text,
+            'source_lang': sourceLang.toUpperCase(),
+            'target_lang': targetLangCode.toUpperCase()
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`DeepL API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('DeepL API response:', data);
+        
+        if (data && data.translations && data.translations[0]) {
+          outputText.textContent = data.translations[0].text;
+        } else {
+          outputText.textContent = mockTranslate(text, sourceLang, targetLangCode);
+        }
+      } catch (error) {
+        console.error('Translation error:', error);
+        outputText.textContent = mockTranslate(text, sourceLang, targetLangCode);
+      }
+    }
+
+    // 模拟翻译（用于演示）
+    function mockTranslate(text, from, to) {
+      if (from === 'zh' && to === 'en') {
+        return `[英文翻译] ${text}\n\n（提示：配置真实 API 后可获得准确翻译）`;
+      } else if (from === 'en' && to === 'zh') {
+        return `[中文翻译] ${text}\n\n（提示：配置真实 API 后可获得准确翻译）`;
+      }
+      return `[${languages[targetLangIndex].name}翻译] ${text}`;
+    }
+
+    // 双击返回悬浮球（排除关闭按钮）
+    document.addEventListener('dblclick', (e) => {
+      if (e.target.id !== 'closeBtn') {
+        ipcRenderer.send('close-main-window');
+      }
+    });
+
+    // 关闭按钮 - 使用 mousedown 更快响应
+    closeBtn.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      ipcRenderer.send('close-main-window');
+    });
+
+    // 初始化
+    updateLanguageButtons();
+  </script>
+</body>
+</html>
