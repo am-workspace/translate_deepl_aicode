@@ -2,7 +2,9 @@
 自用翻译小插件，使用deepl的api接口，ai编写的代码
 
 # 使用事项
-在main-window.html文件中
+首先npm i
+
+然后在main-window.html文件中
 
 338-339行
 
